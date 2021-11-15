@@ -2,6 +2,8 @@ package com.pydawan.dto;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -22,7 +24,7 @@ import org.json.JSONArray;
  * 
  * @author David Birtles
  */
-public abstract class Dto {
+public abstract class DtoBase {
 
     /**
      * Converts this data object to a JSONObject. Handles nested objects. List are
@@ -33,21 +35,8 @@ public abstract class Dto {
         for (Field field : getClass().getDeclaredFields()) {
             try {
                 Object value = field.get(this);
-                if (value instanceof Dto) {
-                    json.put(field.getName(), ((Dto) value).toJson());
-                } else if (value instanceof List) {
-                    JSONArray array = new JSONArray();
-                    for (Object item : (List<?>) value) {
-                        if (item instanceof Dto) {
-                            array.put(((Dto) item).toJson());
-                        } else {
-                            array.put(item);
-                        }
-                    }
-                    json.put(field.getName(), array);
-                } else {
-                    json.put(field.getName(), value);
-                }
+                json.put(field.getName(), objectToJson(value));
+               
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -56,12 +45,29 @@ public abstract class Dto {
     }
 
     /**
+     * Converts an object to a JSONObject. Handles nested objects. List are
+     * converted to JSONArray.
+     * @param o
+     * @return
+     */
+    private Object objectToJson(Object o) {
+        if (o == null)
+            return null;
+
+        return switch(o) {
+            case DtoBase dto -> dto.toJson();
+            case List<?> list -> new JSONArray(list.stream().map(this::objectToJson).toList());
+            default -> o;
+        };
+    }
+
+    /**
      * A static method that converts a JSONObject to a Dto. For each field in the
      * JSONObject, the field name is used as the key and the field value is used as
      * the value. Handles nested objects. JSON Array are converted to List.
      */
     @SuppressWarnings("unchecked")
-    public static <T extends Dto> T fromJson(JSONObject json, Class<T> clazz) {
+    public static <T extends DtoBase> T fromJson(JSONObject json, Class<T> clazz) {
         try {
             T dto = clazz.getConstructor().newInstance();
             for (Field field : clazz.getDeclaredFields()) {
@@ -69,9 +75,9 @@ public abstract class Dto {
                     Object value = json.get(field.getName());
                     switch (value) {
                     case JSONObject object:
-                        if (!field.getType().isAssignableFrom(Dto.class))
+                        if (!field.getType().isAssignableFrom(DtoBase.class))
                             throw new DtoException("JSONObject value for field " + field.getName() + " is not a Dto");
-                        field.set(dto, fromJson(object, (Class<? extends Dto>) field.getType()));
+                        field.set(dto, fromJson(object, (Class<? extends DtoBase>) field.getType()));
                         break;
                     case JSONArray array:
                         if (!field.getType().isAssignableFrom(List.class))
@@ -80,7 +86,7 @@ public abstract class Dto {
                             throw new DtoException("JSONArray value for field " + field.getName() + " is not annotated with @ListOf");
 
                         field.set(dto,
-                                fromJsonArray(array, (Class<? extends Dto>) field.getAnnotation(ListOf.class).value()));
+                                fromJsonArray(array, (Class<? extends DtoBase>) field.getAnnotation(ListOf.class).value()));
                         break;
                     default:
                         field.set(dto, value);
@@ -98,16 +104,19 @@ public abstract class Dto {
     /**
      * A static method that converts a JSONArray to a List. Handles nested objects.
      * Handles non json objects.
+     * This method assumes that the JSONArray is homogeneous.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static <T extends Dto> List<T> fromJsonArray(JSONArray json, Class<T> clazz) {
-        if(clazz.isAssignableFrom(Dto.class))
-            return json.toList().stream()
-                    .map(item -> fromJson(new JSONObject(item), clazz))
+    public static <T extends DtoBase> List<T> fromJsonArray(JSONArray json, Class<T> clazz) {
+        StreamSupport.stream(json.spliterator(), false).forEach(System.out::println);
+        
+        if(DtoBase.class.isAssignableFrom(clazz))
+            return StreamSupport.stream(json.spliterator(), false)
+                    .map(item -> fromJson((JSONObject)item, clazz))
                     .toList();
 
         List<Object> list = json.toList();
-        if (!list.stream().map(Object::getClass).allMatch(c -> c.isAssignableFrom(clazz))) {
+        if (!list.stream().map(Object::getClass).allMatch(clazz::isAssignableFrom)) {
             throw new DtoException("JSONArray value for field " + clazz.getName() + " is not a List of " + clazz.getName());
         }
         return (List) json.toList();
@@ -119,5 +128,31 @@ public abstract class Dto {
     @Override
     public String toString() {
         return toJson().toString(4);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (obj == this)
+            return true;
+        if (obj.getClass() != getClass())
+            return false;
+        
+        /*
+         * This is a bit of a hack. We can't use the toJson method because it
+         * doesn't handle nested objects.
+         */
+        Class<? extends DtoBase> clazz = getClass();
+        for(Field field : clazz.getDeclaredFields()) {
+            try {
+                Object value = field.get(this);
+                Object otherValue = field.get(obj);
+                if(!value.equals(otherValue))
+                    return false;
+            } catch (IllegalAccessException e) {}
+        }
+
+        return true;
     }
 }
