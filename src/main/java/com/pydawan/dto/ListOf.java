@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation should be used on fields of {@link Dto}s that are lists of other {@link Dto}s.
+ * This annotation should be used on fields of {@link DtoBase}s that are lists of other {@link DtoBase}s.
  * The value of the annotation must be the type of the list elements.
  */
 @Target(ElementType.FIELD)
