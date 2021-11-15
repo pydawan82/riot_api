@@ -1,9 +1,16 @@
 package com.pydawan.riot;
 
-public record RiotContext(String apiKey, String region) {
+import static com.pydawan.riot.RiotConstants.majorRegionOf;
+import static com.pydawan.riot.RiotConstants.serverOf;
+
+public record RiotContext(String apiKey, String minorRegion) {
 
     public String server() {
-        return RiotConstants.serverOf(region);
+        return serverOf(minorRegion);
+    }
+
+    public String majorServer() {
+        return serverOf(majorRegionOf(minorRegion));
     }
 
 }

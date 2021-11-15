@@ -28,23 +28,23 @@ public class Query {
      * @throws IOException
      * @throws MalformedURLException
      */
-    public static JSONObject getJSON(String url) throws IOException {
-        return getJSON(new URL(url));
+    public static String fetch(String url) throws IOException {
+        return fetch(new URL(url));
     }
 
-    public static JSONObject getJSON(URL url) throws IOException {
-        return getJSON(url, Map.of());
+    public static String fetch(URL url) throws IOException {
+        return fetch(url, Map.of());
     }
 
-    public static JSONObject getJSON(URL url, Map<String, String> headers) throws IOException {
+    public static String fetch(URL url, Map<String, String> headers) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         for (Entry<String, String> header : headers.entrySet()) {
             connection.setRequestProperty(header.getKey(), header.getValue());
         }
-        return getJSON(connection);
+        return fetch(connection);
     }
 
-    public static JSONObject getJSON(HttpURLConnection connection) throws IOException {
+    public static String fetch(HttpURLConnection connection) throws IOException {
         int code = connection.getResponseCode();
 
         if (code/100 != 2)
@@ -53,7 +53,7 @@ public class Query {
         try (Scanner scan = new Scanner(connection.getInputStream())) {
             scan.useDelimiter("\r\n");
             String jsonStr = scan.tokens().collect(Collectors.joining("\r\n"));
-            return new JSONObject(jsonStr);
+            return jsonStr;
         }
     }
 

@@ -1,13 +1,15 @@
 package com.pydawan;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 import com.pydawan.riot.*;
 import com.pydawan.riot.dto.*;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -27,8 +29,20 @@ public final class App {
      * @throws JSONException
      */
     public static void main(String[] args) throws Exception {
-        RiotContext context = new RiotContext(getApiKey(), RiotConstants.EUW1);
-        LeagueListDto result = RiotAPI.League.challeangerLeagues(context, RiotConstants.SOLO);
-        System.out.println(result);
+        String apiKey = new JSONObject(Files.readString(Path.of("config.json")))
+                .getString("apiKey");
+        RiotContext context = new RiotContext(apiKey, RiotConstants.EUW);
+        String summonerName = "CAFE BABE";
+
+        try {
+            SummonerDto summoner = RiotAPI.Summoner.byName(context, summonerName);
+            System.out.println(summoner);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }
