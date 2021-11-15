@@ -1,8 +1,8 @@
 package com.pydawan.riot.dto;
 
-import com.pydawan.dto.Dto;
+import com.pydawan.dto.DtoBase;
 
-public class LeagueItemDto extends Dto {
+public class LeagueItemDto extends DtoBase {
     public boolean freshBlood;
     public int wins;
     public String summonerName;

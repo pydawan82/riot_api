@@ -2,10 +2,12 @@ package com.pydawan.riot.dto;
 
 import java.util.List;
 
-import com.pydawan.dto.Dto;
+import com.pydawan.dto.DtoBase;
 import com.pydawan.dto.ListOf;
 
-public class ParticipantDto extends Dto {
+import org.json.JSONObject;
+
+public class ParticipantDto extends DtoBase {
     public long championId;
     public PerksDto perks;
     public long profileIconId;
@@ -17,4 +19,8 @@ public class ParticipantDto extends Dto {
     public long spell2Id;
     @ListOf(CustomizationDto.class)
     public List<CustomizationDto> customizations;
+
+    public static ParticipantDto fromJson(JSONObject json) {
+        return DtoBase.fromJson(json, ParticipantDto.class);
+    }
 }

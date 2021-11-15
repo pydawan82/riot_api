@@ -2,9 +2,12 @@ package com.pydawan.riot.dto;
 
 import java.util.List;
 
+import com.pydawan.dto.DtoBase;
 import com.pydawan.dto.ListOf;
 
-public class GameDto {
+import org.json.JSONObject;
+
+public class GameDto extends DtoBase {
     public long gameId;
     public String gameType;
     public long gameStartTime;
@@ -18,4 +21,8 @@ public class GameDto {
     public ObserverDto observer;
     @ListOf(ParticipantDto.class)
     List<ParticipantDto> participants;
+    
+    public static GameDto fromJson(JSONObject json) {
+        return DtoBase.fromJson(json, GameDto.class);
+    }
 }

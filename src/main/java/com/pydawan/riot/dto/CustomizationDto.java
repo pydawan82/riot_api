@@ -1,8 +1,14 @@
 package com.pydawan.riot.dto;
 
-import com.pydawan.dto.Dto;
+import com.pydawan.dto.DtoBase;
 
-public class CustomizationDto extends Dto {
+import org.json.JSONObject;
+
+public class CustomizationDto extends DtoBase {
     public String category;
     public String content;
+
+    public static CustomizationDto fromJson(JSONObject json) {
+        return DtoBase.fromJson(json, CustomizationDto.class);
+    }
 }
